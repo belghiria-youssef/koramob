@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كوراموب - أخبار كرة القدم العربية والعالمية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom Styles */
+        body {
+            background-color: #0b1020;
+            color: #E2E8F0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .navbar {
+            background: linear-gradient(90deg, #0b1020 0%, #0f172a 100%);
+            border-bottom: 1px solid #1f2a44;
+        }
+        .main-content-box {
+            background-color: #0f172a;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            padding: 2.5rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        .matches-carousel {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            gap: 1.5rem;
+            padding-bottom: 1rem;
+        }
+        .matches-carousel::-webkit-scrollbar {
+            display: none;
+        }
+        .matches-carousel {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .match-card {
+            scroll-snap-align: start;
+            flex: 0 0 85%;
+            min-width: 0;
+        }
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px -10px rgba(0,0,0,.5);
+        }
+        .league-tab.active {
+            border-bottom: 2px solid #4fd1c5;
+            color: #4fd1c5;
+        }
+        @media (min-width: 640px) {
+            .match-card {
+                flex: 0 0 45%;
+            }
+        }
+        @media (min-width: 1024px) {
+            .match-card {
+                flex: 0 0 30%;
+            }
+        }
+        .carousel-nav {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #1f2a44;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .carousel-dot.active {
+            background-color: #4fd1c5;
+            transform: scale(1.2);
+        }
+
+        /* Preloader Styles */
+        #preloader {
+            position: fixed;
+            inset: 0;
+            background-color: #0b1020;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+        #preloader.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .preloader-logo {
+            animation: spin 1.5s linear infinite;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        base: { bg: '#0b1020', card: '#0f172a', stroke: '#1f2a44', accent: '#4fd1c5' }
+                    },
+                    boxShadow: { soft: '0 10px 25px -10px rgba(0,0,0,.45)' }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-base-bg text-slate-200 min-h-screen flex flex-col">
+
+    <div id="preloader">
+        <div class="preloader-logo text-accent mb-4">
+            <i class="fas fa-futbol text-6xl"></i>
+        </div>
+        <p class="text-xl font-bold">كوراموب</p>
+    </div>
+
+    <nav class="navbar py-4 px-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4 space-x-reverse">
+                <a href="#" class="text-2xl font-bold text-accent">كوراموب</a>
+                <div class="hidden md:flex space-x-6 space-x-reverse">
+                    <a href="#" class="hover:text-accent transition">الرئيسية</a>
+                    <a href="#" class="hover:text-accent transition">أخبار</a>
+                    <a href="#" class="hover:text-accent transition">المباريات</a>
+                    <a href="#" class="hover:text-accent transition">البطولات</a>
+                    <a href="#" class="hover:text-accent transition">فيديوهات</a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 space-x-reverse">
+                <button class="bg-accent hover:bg-teal-400 text-base-bg px-4 py-2 rounded-lg font-medium transition">
+                    تسجيل الدخول
+                </button>
+                <button class="md:hidden text-xl">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mx-auto px-4 flex-grow">
+        <div class="main-content-box">
+            <section class="mb-12">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold"> أبرز المباريات</h2>
+                </div>
+                <div id="matchesCarousel" class="matches-carousel"></div>
+                <div id="carouselNav" class="carousel-nav"></div>
+            </section>
+    
+            <section class="mb-12">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold">آخر الأخبار</h2>
+                    <a href="#" class="text-accent hover:underline">عرض الكل</a>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <a href="#" class="news-card bg-base-bg rounded-xl overflow-hidden border border-stroke transition duration-300">
+                        <img src="https://images.unsplash.com/photo-1508098682722-e99c47a06b43?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                             alt="News" class="w-full h-40 object-cover">
+                        <div class="p-4">
+                            <span class="text-xs text-slate-400">منذ 7 ساعات</span>
+                            <h3 class="text-lg font-semibold mt-1 mb-2">رسميًا.. الأهلي يتعاقد مع المدرب السويسري رينيه فايلر</h3>
+                            <p class="text-sm text-slate-400 line-clamp-2">أعلن النادي الأهلي المصري اليوم عن تعاقده مع المدرب السويسري رينيه فايلر لقيادة الفريق الأول خلال الفترة المقبلة خلفًا للمدرب بيتسو موسيماني.</p>
+                        </div>
+                    </a>
+                    <a href="#" class="news-card bg-base-bg rounded-xl overflow-hidden border border-stroke transition duration-300">
+                        <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                             alt="News" class="w-full h-40 object-cover">
+                        <div class="p-4">
+                            <span class="text-xs text-slate-400">منذ 9 ساعات</span>
+                            <h3 class="text-lg font-semibold mt-1 mb-2">الاتحاد الدولي يعلن عن تعديلات جديدة في قانون كرة القدم</h3>
+                            <p class="text-sm text-slate-400 line-clamp-2">أعلن الاتحاد الدولي لكرة القدم (فيفا) عن مجموعة من التعديلات الجديدة على قانون اللعبة، أبرزها تعديلات تتعلق بتقنية الفار وحكم الفيديو المساعد.</p>
+                        </div>
+                    </a>
+                    <a href="#" class="news-card bg-base-bg rounded-xl overflow-hidden border border-stroke transition duration-300">
+                        <img src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                             alt="News" class="w-full h-40 object-cover">
+                        <div class="p-4">
+                            <span class="text-xs text-slate-400">منذ 12 ساعة</span>
+                            <h3 class="text-lg font-semibold mt-1 mb-2">برشلونة يعلن عن تجديد عقد لامين يامال حتى 2027</h3>
+                            <p class="text-sm text-slate-400 line-clamp-2">أعلن نادي برشلونة الإسباني عن تجديد عقد نجمه الصاعد لامين يامال حتى عام 2027، مع زيادة بند الشرط الجزائي إلى مليار يورو.</p>
+                        </div>
+                    </a>
+                    <a href="#" class="news-card bg-base-bg rounded-xl overflow-hidden border border-stroke transition duration-300">
+                        <img src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                             alt="News" class="w-full h-40 object-cover">
+                        <div class="p-4">
+                            <span class="text-xs text-slate-400">منذ يوم</span>
+                            <h3 class="text-lg font-semibold mt-1 mb-2">النصر يتأهل إلى نهائي كأس خادم الحرمين الشريفين</h3>
+                            <p class="text-sm text-slate-400 line-clamp-2">تأهل فريق النصر إلى نهائي كأس خادم الحرمين الشريفين بعد فوزه على الاتحاد بثلاثة أهداف لهدفين في المباراة التي جمعتهما مساء اليوم على ملعب الجوهرة.</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+    
+            <section class="mb-12">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold flex items-center">
+                        <span class="bg-red-600 text-white text-sm px-2 py-1 rounded mr-2">عاجل</span>
+                        آخر الأخبار العاجلة
+                    </h2>
+                    <a href="#" class="text-accent hover:underline">عرض الكل</a>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-base-bg rounded-xl overflow-hidden border border-stroke">
+                        <img src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                             alt="Breaking News" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <span class="text-xs text-slate-400">منذ ساعة</span>
+                            <h3 class="text-lg font-semibold mt-1 mb-2">الهلال يتوج بلقب الدوري السعودي للمرة الـ18 في تاريخه</h3>
+                            <p class="text-sm text-slate-400 line-clamp-2">توج فريق الهلال بلقب دوري كأس الأمير محمد بن سلمان للمحترفين للموسم الحالي بعد فوزه على ضيفه التعاون بهدفين دون رد في المباراة التي جرت مساء اليوم على ملعب جامعة الملك سعود.</p>
+                            <a href="#" class="text-accent text-sm mt-3 inline-block hover:underline">قراءة المزيد</a>
+                        </div>
+                    </div>
+                    <div class="bg-base-bg rounded-xl overflow-hidden border border-stroke">
+                        <img src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                             alt="Breaking News" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <span class="text-xs text-slate-400">منذ 3 ساعات</span>
+                            <h3 class="text-lg font-semibold mt-1 mb-2">ريال مدريد يعلن تعاقده مع مبابي لمدة 5 مواسم</h3>
+                            <p class="text-sm text-slate-400 line-clamp-2">أعلن نادي ريال مدريد الإسباني اليوم التعاقد مع النجم الفرنسي كيليان مبابي قادمًا من باريس سان جيرمان في صفقة انتقال حر لمدة 5 مواسم.</p>
+                            <a href="#" class="text-accent text-sm mt-3 inline-block hover:underline">قراءة المزيد</a>
+                        </div>
+                    </div>
+                    <div class="bg-base-bg rounded-xl overflow-hidden border border-stroke">
+                        <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                             alt="Breaking News" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <span class="text-xs text-slate-400">منذ 5 ساعات</span>
+                            <h3 class="text-lg font-semibold mt-1 mb-2">الاتحاد الآسيوي يعلن عن استضافة السعودية لكأس آسيا 2027</h3>
+                            <p class="text-sm text-slate-400 line-clamp-2">أعلن الاتحاد الآسيوي لكرة القدم اليوم عن فوز السعودية بحق استضافة بطولة كأس آسيا 2027، وذلك بعد منافسة مع الهند لإستضافة البطولة القارية الأكبر.</p>
+                            <a href="#" class="text-accent text-sm mt-3 inline-block hover:underline">قراءة المزيد</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+    
+            <section class="mb-12">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold">أبرز الفيديوهات</h2>
+                    <a href="#" class="text-accent hover:underline">عرض الكل</a>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-base-bg rounded-xl overflow-hidden border border-stroke">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                                 alt="Video" class="w-full h-40 object-cover">
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="bg-accent rounded-full w-12 h-12 flex items-center justify-center">
+                                    <i class="fas fa-play text-base-bg"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold mb-2">أهداف مباراة الهلال والتعاون | الدوري السعودي</h3>
+                            <div class="flex items-center text-sm text-slate-400">
+                                <span>كوراموب</span>
+                                <span class="mx-2">•</span>
+                                <span>2.1K مشاهدة</span>
+                                <span class="mx-2">•</span>
+                                <span>منذ يوم</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-base-bg rounded-xl overflow-hidden border border-stroke">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1508098682722-e99c47a06b43?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                                 alt="Video" class="w-full h-40 object-cover">
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="bg-accent rounded-full w-12 h-12 flex items-center justify-center">
+                                    <i class="fas fa-play text-base-bg"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold mb-2">أفضل لحظات مباراة الأهلي والزمالك</h3>
+                            <div class="flex items-center text-sm text-slate-400">
+                                <span>كوراموب</span>
+                                <span class="mx-2">•</span>
+                                <span>5.3K مشاهدة</span>
+                                <span class="mx-2">•</span>
+                                <span>منذ يومين</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-base-bg rounded-xl overflow-hidden border border-stroke">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                                 alt="Video" class="w-full h-40 object-cover">
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="bg-accent rounded-full w-12 h-12 flex items-center justify-center">
+                                    <i class="fas fa-play text-base-bg"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold mb-2">تحليل: كيف سيغير مبابي موازين ريال مدريد؟</h3>
+                            <div class="flex items-center text-sm text-slate-400">
+                                <span>كوراموب</span>
+                                <span class="mx-2">•</span>
+                                <span>1.7K مشاهدة</span>
+                                <span class="mx-2">•</span>
+                                <span>منذ 3 أيام</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <footer class="bg-base-card py-12 px-6 border-t border-stroke">
+        <div class="container mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold text-accent mb-4">كوراموب</h3>
+                    <p class="text-slate-400 text-sm">أول موقع عربي متخصص في أخبار كرة القدم العربية والعالمية، نقدم تغطية شاملة وتحليلات احترافية.</p>
+                    <div class="flex space-x-4 space-x-reverse mt-4">
+                        <a href="#" class="text-slate-400 hover:text-accent"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-slate-400 hover:text-accent"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-slate-400 hover:text-accent"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-slate-400 hover:text-accent"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">الأقسام</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-slate-400 hover:text-accent transition">أخبار عربية</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-accent transition">أخبار عالمية</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-accent transition">تحليلات</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-accent transition">فيديوهات</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-accent transition">مقالات رأي</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">روابط سريعة</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-slate-400 hover:text-accent transition">جدول المباريات</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-accent transition">الترتيب</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-accent transition">الهدافين</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-accent transition">الانتقالات</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-accent transition">نتائج المباريات</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">اشترك في النشرة البريدية</h4>
+                    <p class="text-slate-400 text-sm mb-3">احصل على آخر الأخبار والعروض مباشرة إلى بريدك الإلكتروني</p>
+                    <div class="flex">
+                        <input type="email" placeholder="بريدك الإلكتروني" class="bg-base-bg border border-stroke rounded-r-lg px-4 py-2 w-full focus:outline-none focus:ring-1 focus:ring-accent">
+                        <button class="bg-accent hover:bg-teal-400 text-base-bg px-4 py-2 rounded-l-lg transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-stroke mt-8 pt-8 text-center text-slate-500 text-sm">
+                <p>جميع الحقوق محفوظة © 2025 كوراموب. تصميم وتطوير فريق كوراموب.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const matchesCarousel = document.getElementById('matchesCarousel');
+        const carouselNav = document.getElementById('carouselNav');
+
+        const topLeagues = ["Premier League", "La Liga", "Ligue 1", "Bundesliga", "Serie A", "UEFA Champions League", "CAF Champions League"];
+        const leaguesAr = {
+            "Premier League": "الدوري الإنجليزي",
+            "La Liga": "الدوري الإسباني",
+            "Serie A": "الدوري الإيطالي",
+            "Bundesliga": "الدوري الألماني",
+            "Ligue 1": "الدوري الفرنسي",
+            "UEFA Champions League": "دوري أبطال أوروبا",
+            "CAF Champions League": "دوري أبطال أفريقيا"
+        };
+
+        const saudiTeams = {
+            "Al Hilal": "الهلال",
+            "Al Nassr": "النصر",
+            "Al Ittihad": "الاتحاد",
+            "Al Ahli": "الأهلي",
+            "Al Shabab": "الشباب",
+            "Al Fateh": "الفتح",
+            "Al Taawoun": "التعاون",
+            "Al Raed": "الرائد",
+            "Al Feiha": "الفيحاء",
+            "Abha": "أبها",
+            "Al Khaleej": "الخليج",
+            "Al Riyadh": "الرياض",
+            "Al Wehda": "الوحدة",
+            "Al Ettifaq": "الاتفاق",
+            "Al Hazem": "الحزم",
+            "Al Tai": "الطائي"
+        };
+
+        function fmtTime(ts) {
+            return new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function autoTranslateTeam(name) {
+            if (saudiTeams[name]) return saudiTeams[name];
+            
+            const teamsAr = {
+                "Manchester United": "مانشستر يونايتد",
+                "Liverpool": "ليفربول",
+                "Real Madrid": "ريال مدريد",
+                "Barcelona": "برشلونة",
+                "Juventus": "يوفنتوس",
+                "Bayern Munich": "بايرن ميونخ",
+                "Paris Saint-Germain": "باريس سان جيرمان",
+                "Chelsea": "تشيلسي",
+                "Arsenal": "أرسنال",
+                "Al Ahly": "الأهلي",
+                "Zamalek": "الزمالك",
+                "Wydad": "الوداد",
+                "Raja": "الرجاء"
+            };
+            return teamsAr[name] || name;
+        }
+
+        function loader(text = 'جار التحميل...') {
+            return `<div class="text-center text-slate-400 py-4 col-span-full">${text}</div>`;
+        }
+
+        function dayToLocalIso(offsetDays = 0) {
+            const now = new Date();
+            now.setDate(now.getDate() + offsetDays);
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function updateCarouselNav(totalItems) {
+            carouselNav.innerHTML = '';
+            for (let i = 0; i < totalItems; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+                dot.dataset.index = i;
+                dot.addEventListener('click', () => {
+                    scrollToItem(i);
+                });
+                carouselNav.appendChild(dot);
+            }
+        }
+
+        function scrollToItem(index) {
+            const carousel = document.querySelector('.matches-carousel');
+            const items = document.querySelectorAll('.match-card');
+            if (items.length > index) {
+                items[index].scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'start'
+                });
+
+                document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+                    dot.classList.toggle('active', i === index);
+                });
+            }
+        }
+
+        async function loadTopMatches() {
+            matchesCarousel.innerHTML = loader();
+
+            try {
+                const localToday = dayToLocalIso();
+                const res = await fetch(`https://api.sofascore.com/api/v1/sport/football/scheduled-events/${localToday}`);
+                const data = await res.json();
+                let matches = (data.events || []).filter(ev => topLeagues.includes(ev.tournament?.name) && ev.homeTeam && ev.awayTeam);
+
+                const todayMatches = matches.filter(ev => {
+                    const matchDate = new Date(ev.startTimestamp * 1000);
+                    const now = new Date();
+                    return matchDate.getDate() === now.getDate() &&
+                        matchDate.getMonth() === now.getMonth() &&
+                        matchDate.getFullYear() === now.getFullYear();
+                });
+
+                if (!todayMatches.length) {
+                    matchesCarousel.innerHTML = `<div class="text-center text-slate-400 col-span-full py-4">لا توجد مباريات اليوم</div>`;
+                    return;
+                }
+
+                const sortedMatches = todayMatches.sort((a, b) => {
+                    if (a.tournament.name === "UEFA Champions League") return -1;
+                    if (b.tournament.name === "UEFA Champions League") return 1;
+                    
+                    const leagueOrder = ["Premier League", "La Liga", "Bundesliga", "Serie A", "Ligue 1"];
+                    const aIndex = leagueOrder.indexOf(a.tournament.name);
+                    const bIndex = leagueOrder.indexOf(b.tournament.name);
+                    
+                    return aIndex - bIndex;
+                });
+
+                const top5 = sortedMatches.slice(0, 5);
+
+                matchesCarousel.innerHTML = top5.map(ev => `
+                    <div class="match-card bg-base-bg p-4 rounded-2xl shadow-soft hover:bg-white/10 transition cursor-pointer flex flex-col items-center text-center">
+                        <div class="flex justify-between items-center w-full gap-3 mb-3">
+                            <div class="flex flex-col items-center">
+                                <img src="https://api.sofascore.app/api/v1/team/${ev.homeTeam.id}/image" 
+                                     onerror="this.src='https://via.placeholder.com/48?text=${ev.homeTeam.name.substring(0,2)}'" 
+                                     class="w-12 h-12 rounded-full"/>
+                                <span class="font-semibold text-sm mt-1">${autoTranslateTeam(ev.homeTeam.name)}</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <span class="font-bold text-lg">${ev.homeScore?.current ?? '-'} - ${ev.awayScore?.current ?? '-'}</span>
+                                <span class="text-xs text-slate-400">${fmtTime(ev.startTimestamp)}</span>
+                                <span class="text-xs text-slate-400">${leaguesAr[ev.tournament?.name] || ev.tournament?.name || '-'}</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <img src="https://api.sofascore.app/api/v1/team/${ev.awayTeam.id}/image" 
+                                     onerror="this.src='https://via.placeholder.com/48?text=${ev.awayTeam.name.substring(0,2)}'" 
+                                     class="w-12 h-12 rounded-full"/>
+                                <span class="font-semibold text-sm mt-1">${autoTranslateTeam(ev.awayTeam.name)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                updateCarouselNav(top5.length);
+
+                let timeout;
+                matchesCarousel.addEventListener('scroll', () => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        const scrollPosition = matchesCarousel.scrollLeft;
+                        const cardWidth = document.querySelector('.match-card').offsetWidth;
+                        const gap = 16;
+                        const activeIndex = Math.round(scrollPosition / (cardWidth + gap));
+
+                        document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+                            dot.classList.toggle('active', i === activeIndex);
+                        });
+                    }, 100);
+                });
+
+            } catch (e) {
+                console.error(e);
+                matchesCarousel.innerHTML = `<div class="text-center text-slate-400 col-span-full py-4">خطأ أثناء جلب المباريات</div>`;
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTopMatches();
+        });
+
+        // Hide preloader when the page is fully loaded
+        window.addEventListener('load', () => {
+            const preloader = document.getElementById('preloader');
+            if (preloader) {
+                preloader.classList.add('hide');
+                setTimeout(() => {
+                    preloader.remove();
+                }, 500); // Wait for the transition to finish before removing
+            }
+        });
+    </script>
+</body>
+</html>
